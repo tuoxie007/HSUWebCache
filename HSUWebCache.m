@@ -51,25 +51,30 @@ static size_t CacheSize;
     }
     
     // find cache file
-    for (NSString *subDir in [fm enumeratorAtPath:cachePath]) {
-        NSString *subDirPath = [cachePath stringByAppendingPathComponent:subDir];
-        NSString *filename = [urlStr MD5Hash];
-        NSString *filePath = [subDirPath stringByAppendingPathComponent:filename];
-        if ([fm fileExistsAtPath:filePath]) {
-            UIImage *img = [[UIImage alloc] initWithContentsOfFile:filePath];
-            if (img) {
-                if ([view isKindOfClass:[UIImageView class]]) {
-                    [(UIImageView *)view setImage:img];
+    if (urlStr) {
+        for (NSString *subDir in [fm enumeratorAtPath:cachePath]) {
+            NSString *subDirPath = [cachePath stringByAppendingPathComponent:subDir];
+            NSString *filename = [urlStr MD5Hash];
+            if ([filename isEqualToString:@"443a7687a92e8f6864a255117fd30bc6"]) {
+                
+            }
+            NSString *filePath = [subDirPath stringByAppendingPathComponent:filename];
+            if ([fm fileExistsAtPath:filePath]) {
+                UIImage *img = [[UIImage alloc] initWithContentsOfFile:filePath];
+                if (img) {
+                    if ([view isKindOfClass:[UIImageView class]]) {
+                        [(UIImageView *)view setImage:img];
+                    } else {
+                        [(UIButton *)view setImage:img forState:state];
+                    }
+                    return;
                 } else {
-                    [(UIButton *)view setImage:img forState:state];
-                }
-                return;
-            } else {
-                NSError *err;
-                [fm removeItemAtPath:filePath error:&err];
-                if (err) {
-                    // todo warn
-                    NSLog(@"Remove broken image file failed: %@, %@", filePath, err);
+                    NSError *err;
+                    [fm removeItemAtPath:filePath error:&err];
+                    if (err) {
+                        // todo warn
+                        NSLog(@"Remove broken image file failed: %@, %@", filePath, err);
+                    }
                 }
             }
         }
@@ -80,6 +85,11 @@ static size_t CacheSize;
         [(UIImageView *)view setImage:nil];
     } else {
         [(UIButton *)view setImage:nil forState:state];
+    }
+    
+    // check url
+    if (!urlStr) {
+        return;
     }
     
     // download image file
