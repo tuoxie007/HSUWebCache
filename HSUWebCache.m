@@ -8,7 +8,9 @@
 
 #import "HSUWebCache.h"
 #import <AFNetworking/AFNetworking.h>
-#import "NSString+MD5.h"
+#import <NSString-MD5/NSString+MD5.h>
+
+#define tp(filename) [([NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0])stringByAppendingPathComponent:filename]
 
 @implementation HSUWebCache
 
