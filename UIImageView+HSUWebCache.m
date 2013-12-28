@@ -11,9 +11,9 @@
 
 @implementation UIImageView (HSUWebCache)
 
-- (void)setImageWithUrlStr:(NSString *)urlStr
+- (void)setImageWithUrlStr:(NSString *)urlStr placeHolder:(UIImage *)placeHolder
 {
-    [HSUWebCache setImageWithUrlStr:urlStr toImageView:self];
+    [HSUWebCache setImageWithUrlStr:urlStr toImageView:self placeHolder:placeHolder];
 }
 
 @end

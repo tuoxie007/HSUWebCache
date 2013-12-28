@@ -11,9 +11,9 @@
 
 @implementation UIButton (HSUWebCache)
 
-- (void)setImageWithUrlStr:(NSString *)urlStr forState:(UIControlState)state
+- (void)setImageWithUrlStr:(NSString *)urlStr forState:(UIControlState)state placeHolder:(UIImage *)placeHolder
 {
-    [HSUWebCache setImageWithUrlStr:urlStr toButton:self forState:state];
+    [HSUWebCache setImageWithUrlStr:urlStr toButton:self forState:state placeHolder:placeHolder];
 }
 
 @end

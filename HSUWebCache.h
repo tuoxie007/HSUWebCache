@@ -10,8 +10,8 @@
 
 @interface HSUWebCache : NSObject
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toButton:(UIButton *)button forState:(UIControlState)state;
-+ (void)setImageWithUrlStr:(NSString *)urlStr toImageView:(UIImageView *)imageView;
++ (void)setImageWithUrlStr:(NSString *)urlStr toButton:(UIButton *)button forState:(UIControlState)state placeHolder:(UIImage *)placeHolder;
++ (void)setImageWithUrlStr:(NSString *)urlStr toImageView:(UIImageView *)imageView placeHolder:(UIImage *)placeHolder;
 
 + (void)setImageCacheDiretory:(NSString *)directory;
 + (void)setImageCacheSize:(size_t)cacheSize;

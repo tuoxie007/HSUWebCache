@@ -10,6 +10,6 @@
 
 @interface UIImageView (HSUWebCache)
 
-- (void)setImageWithUrlStr:(NSString *)urlStr;
+- (void)setImageWithUrlStr:(NSString *)urlStr placeHolder:(UIImage *)placeHolder;
 
 @end
