@@ -11,4 +11,5 @@ Pod::Spec.new do |s|
   s.source_files = '*.{h,m}'
   s.framework    = ['Foundation', 'UIKit']
   s.requires_arc = true
+  s.dependency 'AFNetworking', '1.3.3'
 end
