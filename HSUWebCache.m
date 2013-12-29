@@ -7,8 +7,10 @@
 //
 
 #import "HSUWebCache.h"
-#import "AFNetworking.h"
-#import "NSString+MD5.h"
+#import <AFNetworking/AFNetworking.h>
+#import <NSString-MD5/NSString+MD5.h>
+
+#define tp(filename) [([NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0])stringByAppendingPathComponent:filename]
 
 @implementation HSUWebCache
 
@@ -17,17 +19,17 @@
 static NSString *CacheDir;
 static size_t CacheSize;
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toImageView:(UIImageView *)imageView
++ (void)setImageWithUrlStr:(NSString *)urlStr toImageView:(UIImageView *)imageView placeHolder:(UIImage *)placeHolder
 {
-    [self setImageWithUrlStr:urlStr toView:imageView forState:0];
+    [self setImageWithUrlStr:urlStr toView:imageView forState:0 placeHolder:placeHolder];
 }
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toButton:(UIButton *)button forState:(UIControlState)state
++ (void)setImageWithUrlStr:(NSString *)urlStr toButton:(UIButton *)button forState:(UIControlState)state placeHolder:(UIImage *)placeHolder
 {
-    [self setImageWithUrlStr:urlStr toView:button forState:state];
+    [self setImageWithUrlStr:urlStr toView:button forState:state placeHolder:placeHolder];
 }
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toView:(UIView *)view forState:(UIControlState)state
++ (void)setImageWithUrlStr:(NSString *)urlStr toView:(UIView *)view forState:(UIControlState)state placeHolder:(UIImage *)placeHolder
 {
     // check configuration
     if (!CacheDir) {
@@ -52,12 +54,9 @@ static size_t CacheSize;
     
     // find cache file
     if (urlStr) {
-        for (NSString *subDir in [fm enumeratorAtPath:cachePath]) {
+        for (NSString *subDir in [fm contentsOfDirectoryAtPath:cachePath error:nil]) {
             NSString *subDirPath = [cachePath stringByAppendingPathComponent:subDir];
             NSString *filename = [urlStr MD5Hash];
-            if ([filename isEqualToString:@"443a7687a92e8f6864a255117fd30bc6"]) {
-                
-            }
             NSString *filePath = [subDirPath stringByAppendingPathComponent:filename];
             if ([fm fileExistsAtPath:filePath]) {
                 UIImage *img = [[UIImage alloc] initWithContentsOfFile:filePath];
@@ -82,9 +81,9 @@ static size_t CacheSize;
     
     // clear view content
     if ([view isKindOfClass:[UIImageView class]]) {
-        [(UIImageView *)view setImage:nil];
+        [(UIImageView *)view setImage:placeHolder];
     } else {
-        [(UIButton *)view setImage:nil forState:state];
+        [(UIButton *)view setImage:placeHolder forState:state];
     }
     
     // check url

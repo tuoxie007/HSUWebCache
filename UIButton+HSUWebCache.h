@@ -10,6 +10,6 @@
 
 @interface UIButton (HSUWebCache)
 
-- (void)setImageWithUrlStr:(NSString *)urlStr forState:(UIControlState)state;
+- (void)setImageWithUrlStr:(NSString *)urlStr forState:(UIControlState)state placeHolder:(UIImage *)placeHolder;
 
 @end
