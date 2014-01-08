@@ -9,27 +9,29 @@
 #import "HSUWebCache.h"
 #import <AFNetworking/AFNetworking.h>
 #import <NSString-MD5/NSString+MD5.h>
+#import "UIButton+HSUWebCache.h"
+#import "UIImageView+HSUWebCache.h"
 
 #define tp(filename) [([NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0])stringByAppendingPathComponent:filename]
 
 @implementation HSUWebCache
 
-#define CacheSizeDefault 10000000;
+#define CacheSizeDefault 16000000;
 
 static NSString *CacheDir;
 static size_t CacheSize;
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toImageView:(UIImageView *)imageView placeHolder:(UIImage *)placeHolder
++ (void)setImageWithUrlStr:(NSString *)urlStr toImageView:(UIImageView *)imageView placeHolder:(UIImage *)placeHolder success:(void (^)())success failure:(void (^)())failure
 {
-    [self setImageWithUrlStr:urlStr toView:imageView forState:0 placeHolder:placeHolder];
+    [self setImageWithUrlStr:urlStr toView:imageView forState:0 placeHolder:placeHolder success:success failure:failure];
 }
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toButton:(UIButton *)button forState:(UIControlState)state placeHolder:(UIImage *)placeHolder
++ (void)setImageWithUrlStr:(NSString *)urlStr toButton:(UIButton *)button forState:(UIControlState)state placeHolder:(UIImage *)placeHolder success:(void (^)())success failure:(void (^)())failure
 {
-    [self setImageWithUrlStr:urlStr toView:button forState:state placeHolder:placeHolder];
+    [self setImageWithUrlStr:urlStr toView:button forState:state placeHolder:placeHolder success:success failure:failure];
 }
 
-+ (void)setImageWithUrlStr:(NSString *)urlStr toView:(UIView *)view forState:(UIControlState)state placeHolder:(UIImage *)placeHolder
++ (void)setImageWithUrlStr:(NSString *)urlStr toView:(UIView *)view forState:(UIControlState)state placeHolder:(UIImage *)placeHolder success:(void (^)())success failure:(void (^)())failure
 {
     // check configuration
     if (!CacheDir) {
@@ -66,6 +68,7 @@ static size_t CacheSize;
                     } else {
                         [(UIButton *)view setImage:img forState:state];
                     }
+                    if (success) success();
                     return;
                 } else {
                     NSError *err;
@@ -92,9 +95,14 @@ static size_t CacheSize;
     }
     
     // download image file
-    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:urlStr]]];
+    static AFHTTPClient *afClient;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        afClient = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:@"http://tuoxie.me"]];
+        [afClient.operationQueue setMaxConcurrentOperationCount:10];
+    });
     __weak UIView *weakView = view;
-    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+    AFHTTPRequestOperation *operation = [afClient HTTPRequestOperationWithRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:urlStr]] success:^(AFHTTPRequestOperation *operation, id responseObject) {
         
         // get sub directories
         NSString *cachePath = tp(CacheDir);
@@ -114,36 +122,40 @@ static size_t CacheSize;
         
         // caculate current sub folder cache size
         if (subDirs.count) {
+            static int count = 0;
+            count ++;
             NSString *curSubDir = subDirs.lastObject;
-            curSubDirPath = [cachePath stringByAppendingPathComponent:subDirs.lastObject];
-            size_t dirSize = 0;
-            for (NSString *filename in [fm contentsOfDirectoryAtPath:curSubDirPath error:&err]) {
-                NSString *filePath = [curSubDirPath stringByAppendingPathComponent:filename];
-                NSError *err;
-                NSDictionary *attrs = [fm attributesOfItemAtPath:filePath error:&err];
-                if (err) {
-                    // todo error
-                    NSLog(@"Fetch file attributes failed: %@", err); return;
-                }
-                dirSize += [attrs[NSFileSize] longLongValue];
-            }
-            
-            if (dirSize > CacheSize / 2) {
-                NSInteger curIdx = [subDirs indexOfObject:curSubDir];
-                // remove old cache folder
-                if (curIdx > 0) {
-                    NSString *lastSubDir = subDirs[curIdx-1];
-                    NSString *lastSubDirPath = [cachePath stringByAppendingPathComponent:lastSubDir];
+            curSubDirPath = [cachePath stringByAppendingPathComponent:curSubDir];
+            if (count % 100 == 0) {
+                size_t dirSize = 0;
+                for (NSString *filename in [fm contentsOfDirectoryAtPath:curSubDirPath error:&err]) {
+                    NSString *filePath = [curSubDirPath stringByAppendingPathComponent:filename];
                     NSError *err;
-                    [fm removeItemAtPath:lastSubDirPath error:&err];
+                    NSDictionary *attrs = [fm attributesOfItemAtPath:filePath error:&err];
                     if (err) {
                         // todo error
-                        NSLog(@"Remove directory failed: %@, %@", lastSubDirPath, err);
-                        return;
+                        NSLog(@"Fetch file attributes failed: %@", err); return;
                     }
+                    dirSize += [attrs[NSFileSize] longLongValue];
                 }
-                // set nil to use a new sub folder
-                curSubDirPath = nil;
+                
+                if (dirSize > CacheSize / 2) {
+                    NSInteger curIdx = [subDirs indexOfObject:curSubDir];
+                    // remove old cache folder
+                    if (curIdx > 0) {
+                        NSString *lastSubDir = subDirs[curIdx-1];
+                        NSString *lastSubDirPath = [cachePath stringByAppendingPathComponent:lastSubDir];
+                        NSError *err;
+                        [fm removeItemAtPath:lastSubDirPath error:&err];
+                        if (err) {
+                            // todo error
+                            NSLog(@"Remove directory failed: %@, %@", lastSubDirPath, err);
+                            return;
+                        }
+                    }
+                    // set nil to use a new sub folder
+                    curSubDirPath = nil;
+                }
             }
         }
         
@@ -172,20 +184,27 @@ static size_t CacheSize;
                 [imgData writeToFile:filePath atomically:YES];
                 
                 if ([view isKindOfClass:[UIImageView class]]) {
-                    [(UIImageView *)weakView setImage:img];
+                    if ([((UIImageView *)weakView).imageUrl isEqualToString:urlStr]) {
+                        [(UIImageView *)weakView setImage:img];
+                    }
                 } else {
-                    [(UIButton *)weakView setImage:img forState:state];
+                    if ([((UIButton *)weakView).imageUrl isEqualToString:urlStr]) {
+                        [(UIButton *)weakView setImage:img forState:state];
+                    }
                 }
+                if (success) success();
             } else {
                 // todo error
                 NSLog(@"Download image failed: %@", urlStr);
+                if (failure) failure();
                 return;
             }
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
+        if (failure) failure();
     }];
-    [operation start];
+    
+    [afClient.operationQueue addOperation:operation];
 }
 
 + (void)setImageCacheDiretory:(NSString *)directory

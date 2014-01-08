@@ -10,6 +10,9 @@
 
 @interface UIButton (HSUWebCache)
 
+@property (nonatomic, copy) NSString *imageUrl;
+
+- (void)setImageWithUrlStr:(NSString *)urlStr forState:(UIControlState)state placeHolder:(UIImage *)placeHolder success:(void (^)())success failure:(void (^)())failure;
 - (void)setImageWithUrlStr:(NSString *)urlStr forState:(UIControlState)state placeHolder:(UIImage *)placeHolder;
 
 @end
