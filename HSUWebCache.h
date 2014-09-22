@@ -15,5 +15,6 @@
 
 + (void)setImageCacheDiretory:(NSString *)directory;
 + (void)setImageCacheSize:(size_t)cacheSize;
++ (NSError *)cleanCache;
 
 @end

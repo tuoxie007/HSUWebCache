@@ -126,7 +126,7 @@ static size_t CacheSize;
             count ++;
             NSString *curSubDir = subDirs.lastObject;
             curSubDirPath = [cachePath stringByAppendingPathComponent:curSubDir];
-            if (count % 100 == 0) {
+            if (count % 10 == 0) {
                 size_t dirSize = 0;
                 for (NSString *filename in [fm contentsOfDirectoryAtPath:curSubDirPath error:&err]) {
                     NSString *filePath = [curSubDirPath stringByAppendingPathComponent:filename];
@@ -215,6 +215,14 @@ static size_t CacheSize;
 + (void)setImageCacheSize:(size_t)cacheSize
 {
     CacheSize = cacheSize;
+}
+
++ (NSError *)cleanCache
+{
+    NSString *cachePath = tp(CacheDir);
+    NSError *error = nil;
+    [[NSFileManager defaultManager] removeItemAtPath:cachePath error:&error];
+    return error;
 }
 
 @end
